@@ -1,0 +1,8 @@
+kind: ActiveMQArtemisAddress
+apiVersion: broker.amq.io/v1beta1
+metadata:
+  name: spring-boot-camel-amq
+spec:
+  addressName: spring-boot-camel-amq
+  queueName: incomingOrders
+  routingType: anycast

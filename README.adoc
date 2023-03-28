@@ -4,9 +4,7 @@ This quickstart demonstrates how to connect a Spring-Boot application AMQ Broker
 
 In this example we will use two containers, one container to run as an AMQ Broker instance, and another as a client to the broker, where the Camel routes are running.
 
-This quickstart requires AMQ Broker to have been deployed and running first. To install AMQ Broker into OpenShift or Kubernetes follow https://access.redhat.com/documentation/en-us/red_hat_amq/2020.q4/html/deploying_amq_broker_on_openshift/assembly-br-planning-a-deployment_broker-ocp[documentation].
-
-Quickstart uses the _standard address space_ and  requires standard authentication. For address space and queue definition _standard-small-queue_, _standard_unlimited_ plans are used, therefore make sure you have also installed example plans, roles and standard authentication service.
+This quickstart requires AMQ Broker to have been deployed and running first. To install AMQ Broker into OpenShift or Kubernetes follow https://access.redhat.com/documentation/en-us/red_hat_amq_broker/7.10/html/deploying_amq_broker_on_openshift/deploying-broker-on-ocp-using-operator_broker-ocp[documentation].
 
 The application utilizes the Spring http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/annotation/ImportResource.html[`@ImportResource`] annotation to load a Camel Context definition via a _src/main/resources/spring/camel-context.xml_ file on the classpath.
 
@@ -47,6 +45,8 @@ $ oc login -u developer -p developer
 $ oc new-project MY_PROJECT_NAME
 ----
 
+. Make sure AMQ Broker Operator is installed in the cluster or in the namespace
+
 . Change the directory to the folder that contains the extracted quickstart application (for example, `my_openshift/spring-boot-camel-amq`) :
 +
 [source,bash,options="nowrap",subs="attributes+"]
@@ -54,13 +54,30 @@ $ oc new-project MY_PROJECT_NAME
 $ cd my_openshift/spring-boot-camel-amq
 ----
 
-. Before running the quickstart, you need to configure AMQ Broker (to create user and queue - both as an admin). Run the following commands to apply configuration files:
+. Before running the quickstart, you need to create and configure AMQ Broker.
+Create a `secret` named `my-tls-secret` containing TLS certificates to use to connect as described in https://access.redhat.com/documentation/en-us/red_hat_amq_broker/7.10/html/deploying_amq_broker_on_openshift/assembly-br-configuring-operator-based-deployments_broker-ocp#proc-br-configuring-one-way-tls_broker-ocp[configuring-one-way-tls_broker-ocp].
+Run the following commands to apply configuration files:
 
 +
 [source,bash,options="nowrap",subs="attributes+"]
 ----
+$ keytool -genkey -alias broker -keyalg RSA -keystore ./broker.ks --storepass changeit -dname "CN=broker, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown"
+$ keytool -export -alias broker -keystore ./broker.ks -file ./broker_cert.pem --storepass changeit
+$ keytool -import -alias broker -keystore ./client.ts -file ./broker_cert.pem --storepass changeit --noprompt
 $ oc login -u system:admin
+$ oc create secret generic my-tls-secret \
+  --from-file=broker.ks=./broker.ks \
+  --from-file=client.ts=./client.ts \
+  --from-literal=keyStorePassword=changeit \
+  --from-literal=trustStorePassword=changeit
 $ oc apply -f src/main/resources/k8s
+----
+
+. Make sure the AMQ Broker is ready
++
+[source,bash,options="nowrap",subs="attributes+"]
+----
+$ oc get pod -l ActiveMQArtemis=spring-boot-camel-amq
 ----
 
 . Build and deploy the project to the OpenShift cluster:

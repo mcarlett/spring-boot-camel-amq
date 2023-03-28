@@ -1,0 +1,33 @@
+apiVersion: broker.amq.io/v1beta1
+kind: ActiveMQArtemis
+metadata:
+  name: spring-boot-camel-amq
+  labels:
+    app: spring-boot-camel-amq
+  application: spring-boot-camel-amq
+spec:
+  acceptors:
+    - name: amqp
+      port: 5672
+      expose: true
+      protocols: amqp
+    - name: amqps
+      port: 5671
+      expose: true
+      protocols: amqp
+      sslEnabled: true
+      sslSecret: my-tls-secret
+  adminUser: user1
+  adminPassword: test
+  console:
+    expose: true
+  deploymentPlan:
+    size: 1
+    messageMigration: false
+    managementRBACEnabled: true
+    journalType: nio
+    jolokiaAgentEnabled: true
+    image: placeholder
+  upgrades:
+    enabled: false
+    minor: false
